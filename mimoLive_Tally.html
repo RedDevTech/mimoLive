@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mimoLive Tally</title>
+<style type="text/css">
+.textnormal{font-family:Helvetica, Arial, sans-serif; font-size:14px; color:#000000; line-height:16px;}
+.textbold{font-family:Helvetica, Arial, sans-serif; font-size:18px; color:#000000; line-height:20px; font-weight:600;}
+.textsmall{font-family:Helvetica, Arial, sans-serif; font-size:12px; color:#000000; line-height:14px;}
+body{margin:0; padding:0; background-color:#e0e0e0;}
+.center-div{position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background-color:#ffffff66; padding:10px; border-radius:6px; text-align:center;}
+</style>
+</head>
+
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" class="textnormal">
+<div class="center-div">
+<div id="tallydisp" style="display:none;">mimoLive Tally</div>
+<div id="tallyerror" class="textbold" style="padding:5px; display:none;"></div>
+<div id="tallyform" style="display:block;">
+<form name="tallyform" action="javascript:checkForm();">
+<span style="textsmall">Enter mimoLive › Preferences... › Remote Control › Server address</span><br>
+<input type="text" name="tallyformhost" value="" placeholder="http://127.0.0.1:8989/"><br>
+<span style="textsmall">Enter mimoLive › Source › API Endpoint</span><br>
+<input type="text" name="tallyformapi" value="" placeholder="/api/v1/documents/..."><br>
+<input type="submit" value="Ok">
+</form>
+</div>
+</div>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+
+var mimolive_host = '';
+var mimolive_api = '';
+var mimolive_timeout = 1000;
+
+const tallydisp = document.getElementById('tallydisp');
+const tallyerror = document.getElementById('tallyerror');
+const tallyform = document.getElementById('tallyform');
+
+var getJSON = function(url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+      var status = xhr.status;
+      if (status === 200) {
+        callback(null, xhr.response);
+      } else {
+        callback(status, xhr.response);
+      }
+    };
+    xhr.send();
+};
+function checkServer() {
+	if (mimolive_host != '' && mimolive_api != '') {
+		mimolive_host = mimolive_host.replace(':8989/', ':8989');
+		getJSON(mimolive_host+mimolive_api, function(err, data) {
+		  if (err !== null) {
+			window.document.title = 'mimoLive Tally';
+			tallydisp.innerHTML = '';
+			tallydisp.style.display = 'none';
+			tallyerror.innerHTML = 'Error: '+err;
+			tallyerror.style.display = 'block';
+			tallyform.style.display = 'block';
+		  } else {
+			var attributes = data.data.attributes;
+			window.document.title = attributes.name;
+			tallydisp.innerHTML = attributes.name;
+			tallydisp.style.display = 'block';
+			tallyform.style.display = 'none';
+			tallyerror.innerHTML = '';
+			tallyerror.style.display = 'none';
+			if (attributes['tally-state'] == 'preview') {
+				document.body.style.backgroundColor = '#00ff00';
+			} else if (attributes['tally-state'] == 'program') {
+				document.body.style.backgroundColor = '#ff0000';
+			} else {
+				document.body.style.backgroundColor = '#e0e0e0';
+			}
+			setTimeout(function(){ checkServer(); }, mimolive_timeout);
+		  }
+		});
+	} else {			
+		window.document.title = 'mimoLive Tally';
+		tallydisp.innerHTML = '';
+		tallydisp.style.display = 'none';
+		tallyerror.innerHTML = 'Enter mimoLive values';
+		tallyerror.style.display = 'block';		
+		tallyform.style.display = 'block';
+	}
+}
+function checkForm() {
+	mimolive_host = document.tallyform.tallyformhost.value;
+	mimolive_api = document.tallyform.tallyformapi.value;
+	checkServer();
+}
+checkServer();
+
+// -->
+</script>
+
+</body>
+</html>
